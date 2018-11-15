@@ -23,6 +23,9 @@ angular.module("ngRadialGauge",[]).directive('ngRadialGauge', ['$window', '$time
              valueUnit: '=',
              precision: '=',
              majorGraduationPrecision: '=',
+        majorGraduations: '=',
+        minorGraduations: '=',
+        api: '=',
              label: '@',
              onClick: '&'
          },
@@ -50,8 +53,6 @@ angular.module("ngRadialGauge",[]).directive('ngRadialGauge', ['$window', '$time
              };
              var innerRadius = Math.round((view.width * 130) / 300);
              var outerRadius = Math.round((view.width * 145) / 300);
-             var majorGraduations = parseInt(attrs.majorGraduations - 1) || 5;
-             var minorGraduations = parseInt(attrs.minorGraduations) || 10;
              var majorGraduationLength = Math.round((view.width * 16) / 300);
              var minorGraduationLength = Math.round((view.width * 10) / 300);
              var majorGraduationMarginTop = Math.round((view.width * 7) / 300);
@@ -82,6 +83,8 @@ angular.module("ngRadialGauge",[]).directive('ngRadialGauge', ['$window', '$time
              var precision;
              var majorGraduationPrecision;
              var ranges;
+        var majorGraduations;
+        var minorGraduations;
              
              var updateInternalData = function() {
                  maxLimit = extractData('upperLimit') ? extractData('upperLimit') : defaultUpperLimit;
@@ -91,6 +94,8 @@ angular.module("ngRadialGauge",[]).directive('ngRadialGauge', ['$window', '$time
                  precision = extractData('precision');
                  majorGraduationPrecision = extractData('majorGraduationPrecision');
                  ranges = extractData('ranges');
+          majorGraduations = extractData('majorGraduations') - 1;
+          minorGraduations = extractData('minorGraduations');
              };
              updateInternalData();
              
@@ -319,15 +324,9 @@ angular.module("ngRadialGauge",[]).directive('ngRadialGauge', ['$window', '$time
                  scope.render();
              });
 
-             /* Colin Bester
-                Removed watching of data.value as couldn't see reason for this, plus it's the cause of flicker when using
-                data=option mode of using directive.
-                I'm assuming that calling render function is not what was intended on every value update.
-             */
-             // scope.$watchCollection('[ranges, data.ranges, data.value]', function () {
-             scope.$watchCollection('[ranges, data.ranges]', function () {
-                 scope.render();
-             }, true);
+        scope.api.rerender = function() {
+          scope.render();
+        };
 
 
              scope.render = function () {
@@ -393,11 +392,12 @@ angular.module("ngRadialGauge",[]).directive('ngRadialGauge', ['$window', '$time
                         svg.selectAll('.mtt-graduation-needle-center').attr("fill", inactiveColor);
                     }
              };
-             scope.$watchCollection('[value, data.value]', function () {
-                 if (!initialized) return;
-                 updateInternalData();
-                 onValueChanged(value, precision, valueUnit);
-             }, true);
+
+        scope.api.valueChanged = function() {
+          if (!initialized) return;
+          updateInternalData();
+          onValueChanged(value, precision, valueUnit);
+        };
          }
      };
  }]);
